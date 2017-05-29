@@ -38,13 +38,11 @@ They are have a sharper learning curve than Thunk Args.
 
 Functional programming has become very popular for building robust, complex UIs, and using react and
 redux is a pleasure. However, there are some problems which have not been fully addressed with the
-react/redux pattern, for instance, the scourge of the side effect, the horrors of the race conditions,
-and asyncronous hell. These problems are not endemic to react/redux -- as such the inspiration for addressing
-these issues have come from a variety of different sources
+react/redux pattern, for instance, side effects, race conditions, and asyncronous hell.
 
 On the Firefox debugger, we have explored two options within the react ecosystem for dealing with these problems
-which reach outside of the clean react-redux pattern: Thunk args and Sagas. Using a recent refactoring of
+which reach outside of the react-redux pattern: Thunk args and Sagas. Using a recent refactoring of
 debugger breakpoints as a case study, We will explore the strengths and weaknesses of each, the rational and
-histories behind the patterns, and how we came to our chosen solution. The talk will be a bit advanced, and
-assumes some knowledge of react, reframe or similar frontend framework.
+histories behind the patterns, and how we came to our chosen solution. The talk assumes some knowledge of react,
+reframe or similar frontend framework, but might prove an interesting inspiration for similar problems in other places!
 
