@@ -4,7 +4,7 @@
 
 ### Breakdown:
 
-(not the abstract! Just loosely thinking about the problem, and listing what comes to mind.)
+(not the abstract! This probably wont go in the talk. Just loosely thinking about the problem, and listing what comes to mind.)
 
 #### The context:
 
@@ -17,9 +17,11 @@ truths on debugger breakpoints.
 
 #### Solution one (current solution):
 
-Thunk args are a redux middleware. Thunk args make it easier to work with asyncronous resources. They rely on
-async/await, and return complex objects that have an async promise.  Thunk args wrap an action creator and
-delay the execution of a function until it is ready. They can introduce race conditions by virtue of
+Thunk args are a redux middleware. A thunk refers to a subroutine which is used to complete a calcultion
+used by another subroutine. It is a piece of terminology that comes to use from the world of compilers, where
+having arbitrary mathematical calculations that needed to be performed, rather than simple variables
+needed a clearer way of being called. Thunk refers to the jocular derivitive of "think" ([from wikipedia](https://en.wikipedia.org/wiki/Thunk) )
+In react/redux, Thunk args make it easier to work with asyncronous resources. They rely on async/await, and return complex objects that have an async promise. Thunk args wrap an action creator and delay the execution of a function until it is ready. They can introduce race conditions by virtue of
 having tasks pushed to them and make it difficult to make descisions regarding structuring actions and reducers
 
 #### Solution two (proposed solution):
@@ -30,8 +32,7 @@ better described as process management. They have proven to be useful in a numbe
 including distributed systems. The saga pattern was introduced into the react/redux community as a
 way to manage side effects. The purpose is to isolate side effects into a controlled environment.i
 They limit race conditions by pulling tasks, rather than having tasks pushed to them. Sagas rely on
-javascript generators, which are not yet fully accepted into the ES spec. They return simple objects.
-They are have a sharper learning curve than Thunk Args.
+javascript generators. They return simple objects. They are have a sharper learning curve than Thunk Args.
 
 
 ### Abstract version 1:
