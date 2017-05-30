@@ -32,7 +32,7 @@ Self taught programmers, or anyone who struggles with reading scientific papers 
   information to process. Also remember to suspend any kind of judgement of the paper or ideas.
   you will be more likely to benefit from the paper if you are not fighting it. this time is going
   to be slower. stop on terms you don't understand, look them up. a good trick is to split the
-  paper up and do the reading in parts. if its particularily dense, only do one page, or even one
+  paper up and do the reading in parts. if its particularly dense, only do one page, or even one
   paragraph! per day. Monitor how you are reading, if you feel like you are losing focus, pause
   for a bit and come back to it later. Take notes as you go. You will find good secondary reading
   in the citations of the paper. (don't invest too much time in them though, better to just get
