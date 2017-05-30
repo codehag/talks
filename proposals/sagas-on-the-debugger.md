@@ -2,18 +2,20 @@
 
 (maybe kinda title)
 
-### Breakdown:
-
-(not the abstract! This probably wont go in the talk. Just loosely thinking about the problem, and listing what comes to mind.)
+### Brain dump:
 
 #### The context:
 
 Browser debugger written in react.
 
+#### The audience:
+People interested in functional programing, and functional programming patterns that can be applied
+elsewhere.
+
 #### The problem:
 
-unmanagable and difficult to understand side effects, race conditions and multiple sources of
-truths on debugger breakpoints.
+Unmanagable and difficult to understand side effects, race conditions and multiple sources of
+truths on debugger breakpoints. There are lot's of options for dealing with this, lets compare two.
 
 #### Solution one (current solution):
 
@@ -34,16 +36,25 @@ way to manage side effects. The purpose is to isolate side effects into a contro
 They limit race conditions by pulling tasks, rather than having tasks pushed to them. Sagas rely on
 javascript generators. They return simple objects. They are have a sharper learning curve than Thunk Args.
 
+#### potential questions
 
-### Abstract version 1:
+- why not redux-observable?
 
-Functional programming has become very popular for building robust, complex UIs, and using react and
-redux is a pleasure. However, there are some problems which have not been fully addressed with the
-react/redux pattern, for instance, side effects, race conditions, and asyncronous hell.
+- why not use graphQL / Flux?
 
-On the Firefox debugger, we have explored two options within the react ecosystem for dealing with these problems
-which reach outside of the react-redux pattern: Thunk args and Sagas. Using a recent refactoring of
-debugger breakpoints as a case study, We will explore the strengths and weaknesses of each, the rational and
-histories behind the patterns, and how we came to our chosen solution. The talk assumes some knowledge of react,
-reframe or similar frontend framework, but might prove an interesting inspiration for similar problems in other places!
+### Abstract
+
+Functional programming has become popular for building robust, complex UIs. Using react and
+redux for example, alleviates many of the issues commonly found in UI programming. One in
+particular is making changes in state are clear and predictable. However, there are some
+problems which continue to be painful. Asyncronicity is one such pain point, since
+changes to state which are asyncronous are difficult to predict and reason about.
+
+In the Firefox debugger, we have explored two options within the react ecosystem for dealing with this:
+Thunk args and Sagas. Each takes a different approach to the problem -- communicating with an async resource
+and updating the state accordingly. Using a recent refactoring of debugger breakpoints as a case study, we will explore the
+strengths and weaknesses of each. In the process we will clarify the rationale and histories behind the
+patterns, how they solve the issue, and show how we came to our chosen solution. While the talk will be
+focused on the issue from a frontend/UI perspective, it might prove an interesting inspiration for
+similar problems in other places!
 
