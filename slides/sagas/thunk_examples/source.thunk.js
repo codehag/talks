@@ -8,11 +8,16 @@ export async function basicPromise(arg) {
 export function newSource(source) {
   return async ({ dispatch, getState }) => {
     dispatch({ type: "ADD_SOURCE", source });
-
     dispatch(loadSourceMap(source)); // an async operation
-
     await checkSelectedSource(getState(), dispatch, source);
     await checkPendingBreakpoints(getState(), dispatch, source);
+  };
+}
+
+function* loadSourceMap(source) {
+  return async ({ dispatch }) => {
+    const data = await sourceMaps.loadSourceMap(source);
+    dispatch({ type: "LOAD_SOURCE_MAP", source, ...data });
   };
 }
 

@@ -34,7 +34,6 @@ function* checkBreakpoints(source) {
 
 function* selectSource(sourceId,) {
   const source = yield select(getSource, sourceId);
-
   yield put({ type: "LOAD_SOURCE_TEXT", source });
   yield put({ type: "SELECT_SOURCE", sourceId });
 }
@@ -48,6 +47,13 @@ export function* watchLoadSourceText() {
     } else {
       yield call(loadSourceText, source)
     }
+  }
+}
+
+function* loadSourceMap(source) {
+  if (hasSourceMap(source)) {
+    const data = yield call(loadSourceMap, source);
+    yield put({ type: "LOAD_SOURCE_MAP", source, ...data });
   }
 }
 

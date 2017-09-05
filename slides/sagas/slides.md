@@ -1,180 +1,697 @@
+---
+title: Side effects results may vary
+theme: solarized
+revealOptions:
+  transition: 'fade'
+---
 
-Concept -- treat the talk like a play. the debugger is the stage, and there are a number of actors
-on the stage. introduce each actor, describe their role, how they work. The "antagonist" is played
-by asynchronous code. And then we have our two competing solutuions. The twist comes at the end.
+# Side-Effects
+### Results may vary
 
-#Sagas (Theme: don quixote)
+Yulia Startsev
 
-This talk is ultimately about side effects. while not impossible, it is very difficult to build an
-application of a certain level of complexity without using state. And state, by necessity, implies
-impure functions
+@ioctapteb
 
-#The Stage: Debugger (screenshot of the debugger)
+---
 
-(screenshots or gif of the debugger debugging the debugger)
+<!-- .slide: data-background="./images/debugger.png" -->
 
-We are going to look at one of the most important interactions users have with the debugger, and
-that involves setting breakpoints. breakpoints allow you to stop the execution of a piece of code at
-a designated location, and this in turn allows you to run code in that context to see what is going
-wrong with your code. You can also inspect how different variables have been evaluated. There are
-more complex things that can be done, such as watch expressions and conditional breakpoints, but for
-now we will focus on this case.
+---
 
-[gif - breakpoint with console]
+## Help frustrated programmers
 
-There is some pretty clear state that we need to deal with. We need to know if a break point exists,
-where it is set, in which file, and what other breakpoints are associated with this domain.
+1. become more frustrated
+2. solve problems
 
-# Breakpoints, the primary task of a debugger
+---
 
-Lets talk a bit about what breakpoints are. They are a list of points in code where you want to stop
-the execution so that you can walk through the execution step by step.
-when we are setting the breakpoint we essentially want to take a
-user's interaction in the UI, and register it with the server
+## Debugging, what is it really?
 
-however, we have multiple UI interactions that could potentially set a breakpoint. You can set a
-breakpoint from the gutter of the editor, but you can also modify it from the breakpoints panel --
-making it active or inactive, or the entire group active or inactive. We also have multiple sources
-that need to display the same breakpoint, for example a bundle file has a breakpoint at 40000, and
-the sourcemapped version of the file has a breakpoint at line 10. We need to know about both of
-these.
+![first-computer-bug](./images/first-bug.jpg)
 
-If we model this as an object oriented problem, it will be rather difficult to keep track of everything. instead, we are using a
-rather well established pattern,
+---
 
-#Enter Left: Flux/redux (a book about an epic knights quest)
+## Slide
 
-The general idea of this pattern might be familiar. You keep all of your
-state in a single spot. In the case of redux, you keep it in a store held in memory. You communicate through
-actions. Through events. This is great for a UI, we can have multiple interested views in a given piece of
-data, and multiple places from which that can be influenced, yet it all stays in sync.
+[debugger-debuggee-relationship]
 
-While the flux pattern is a smaller part of this story, i want to give a bit of context before
-moving on, because this pattern will be crucial later on. After all, both Thunks and sagas are
-middleware for flux.
+---
 
-Flux works with actions and reducers, we have the following flow of data
+## Tasks of a debugger
 
-We have three characters in a flux dispatch. We have a dispatcher which takes care of sending an
-object to a reducer. an action (probably created by an action creator) and the reducer, who updates
-the store, and takes the existing state and combines it with the new state. You want both the action
-and the reducer to be only concerned with one thing. The action should be interested in making a
-simple object that says "what just happened". the reducer should take the data and mix it in with
-the state as necessary.
+```c++
+main:
+00000: getarg 0
+00003: dup
+00004: callprop "a"
+00009: swap
+00010: call-ignores-rv
+00013: pop
+00014: retrval
 
-dispatch ({ action }) -> reducer sets state
+Source notes:
+ ofs line    pc  delta desc     args
+---- ---- ----- ------ -------- ------
+  0:    3     0 [   0] colspan 13
+  2:    3    14 [  14] xdelta
+  3:    3    14 [   0] colspan 7
+```
 
-#Breakpoints, an epic journey of data
+---
 
-Lets get back to breakpoints. A naive implementation of this might look something like this:
+## Tasks of a debugger
 
-UI event -> get breakpoint data -> set breakpoint data on the server -> set breakpoint on the client
+* is informed where the interpreter is in the execution, as the program is running
+* is capable of pausing the program
+* knows what has happened before this point (callstack)
+* allows the user to select pause points
 
-the order of the last two doesnt matter so much, since we are not doing any validation in this naive
-implementation. but lets continue with our user story about breakpoints
+---
 
-as a user, you are likely to get to a point where you want persisted breakpoints, for example, if the
-functionality that you are trying to debug runs when the page loads, it helps that the breakpoint
-doesnt disappear as soon as you refresh, or restart the browser.
+## Breakpoints
 
-UI event -> breakpoint data -> set initial breakpoint -> send to server -> save to persisted store
+![breakpoint](./images/breakpoint.png)
 
-Now we have another data flow that could potentially occur, and that is -- restoring breakpoints on
-initial load.
+* are a user interface for choosing where to stop
+* are persisted between runs
+* UI is crucial
 
-Load Source Event -> get breakpoint data -> set initial breakpoint -> send to server
+---
 
-ok, lets look at this conceptually more interesting case. You have a breakpoint that you have set in
-your code, and your code changes. you reload the page -- and... suddenly you have a breakpoint that
-is in an invalid location. so at the end of each of these steps we have to reset a breakpoint if it
-has moved.
+## New debugger client
 
-Cool. but when we are talking to the server, we are talking to something that does not execute in
-line with our applciation. Its asynchronous. Which means, there is implicit state that we cannot
-store in the reducer (it is not meaningful to the application). So what do we do
+* written in javascript / html (web tech stack)
+* using react / redux
 
-# Enter right: the asynchronous service (windmills and don quixote)
+---
 
-Now, many of you who have worked on the frontend know this character intimately. Perhaps you used
-ajax, or the classic xhr to communicate with it. And when talking to an asynchronous service you
-have to be mindfull of one thing in particular -- has the data from the service loaded yet... or
-not?
+### Flux
 
-And when you need to remember something like this... when you need to remember anything - you have
-state. How do we deal with this
+![flux-data-flow](./images/flux-data-flow.svg)
 
-# Thunk it.
+---
 
-one solution, within the redux ecosystem, is redux-thunk
-Thunk args are a Redux middleware. A thunk refers to a subroutine which is used to complete a calculation
-used by another subroutine. It is a piece of terminology that comes to use from the world of compilers, where
-having arbitrary mathematical calculations that needed to be performed, rather than simple variables
-needed a clearer way of being called. Thunk refers to the jocular derivative of "think" ([from wikipedia](https://en.wikipedia.org/wiki/Thunk) )
-In React/Redux, thunk args make it easier to work with asynchronous resources. They rely on async/await, and return complex objects that have an async promise. Thunk args wrap an action creator and delay the execution of a function until it is ready. They can introduce race conditions by virtue of
-having tasks pushed to them and make it difficult to make decisions regarding structuring actions and reducers
+## Flux data principles
 
-here is an example of how it looks when added to the data flow of our breakpoints action. As you can
-see, it wraps all calls to the reducer
+* central store
+* store is updated via actions and reducers
+* actions should send "what happened"
+* reducers should combine the existing state with the new data
 
-# Chapter 1: The promise (don quixote and the shepardess marcela, 2 images)
+---
 
-For those of you who might not be as familiar with javascript for some time, you know about XHR.
-XHR required you add event listeners in order to discover if the request was finished. Ajax improved
-this, adding a human readible wrapper around the
-api, and it was finally officially improved in the form of a promise. A promise is a special type of
-object that changes its own state. The possible state are pending, done and error.
+## Debugger Event triggers
+
+* server (debuggee events such as exceptions and debugger statements, breakpoints, load events etc)
+* user (onclick events, navigation, etc)
+
+---
+
+## async services
+
+* server
+* workers (sourceMaps, abstract syntax tree, parser, etc)
+
+---
+
+![dataflow](./images/data-flow.svg)
+
+---
+
+## Two strategies
+
+---
+
+![thunks](./images/thunk.svg)
+
+---
+
+![sagas](./images/saga.svg)
+
+---
+
+## Thunks in depth
+
+* compiler theory -- comes from "to have already thought"
+* Promise based
+* wraps the dispatcher
+
+---
+
+## understanding promises
+
+* promises are a web api
+* promises are called after the current callstack clears
+* has three states: pending, done, and error
+
+---
+
+```javascript
+function basicAction() {
+  return ({ dispatch }) => {
+    dispatch({ type: "BASIC_ACTION", message: "hi" });
+}
+```
+
+```javascript
+async function basicPromise(arg) {
+  const message = await asyncOperation; // { message: `hi ${user}` }
+  return message;
+}
+```
+
+```javascript
+function update(state, action) {
+  switch (action.type) {
+    case "BASIC_ACTION":
+      if (action.status === "start") {
+        return { message: action.message }; // { status: "done", message: "hi" }
+      }
+      if (action.status === "done") {
+        return { message: action.value.message }; // { status: "done", message: "hi", value: { message: "hi user" } }
+      }
+      return state;
+    default:
+      return state;
+  }
+}
+```
+
+---
+
+## Sagas in depth
+
+* comes from the database community -- long life transactions
+* each step has potential to roll back or roll forward
+* generator based
+* listens to actions, and dispatches it's own actions when it is ready
+
+---
+
+## understanding generators
+
+* generators are the underlying logic behind async-await
+* generators create an object with a next() method
+* `yield` keyword is used to express a "pause" before the `next()` call
+* the saga middle ware takes care of calling .next() when an async call is completed
+
+---
+
+```javascript
+function* beuysGenerator() {
+  yield "ja ja ja";
+  yield "ne ne ne";
+}
+
+const jaNein = beuysGenerator();
+
+jaNein.next() // { value: "ja ja ja", done: false }
+jaNein.next() // { value: "ne ne ne", done: false }
+jaNein.next() // { value: undefined, done: true }
+```
+
+---
+
+## saga yield functions
+
+#### blocking
+
+```
+take
+take.maybe
+put.resolve
+call
+all
+join
+cancel
+actionChannel
+```
+
+#### non-blocking
+
+```
+takeEvery
+put
+fork
+spawn
+```
 
 
-# A real world example (code, diagram of redux -> server communication);
+---
 
-So, in order to implement promises, we have a wrapper around the redux dispatch call.
-this is a good way to solve our basic problem, which is that we do not have a problem with async
-anymore
+## basic saga examples
 
-but lets look at another case of breakpoints.
+```javascript
+function basicAction() {
+  return ({ dispatch }) => {
+    dispatch({ type: "BASIC_ACTION", message: "hi" });
+}
+```
 
-# Lets look at another data flow: new sources
+```javascript
+function* watchBasicAction() {
+  yield takeEvery('BASIC_ACTION', basicSaga)
+}
 
-initial load -> newSource -> breakpoints -> load sourcetext -> construct symbols -> add breakpoints
-initial load -> newSource -> loadSourcetext -> construct symbols -> show text
+function* basicSaga(args) {
+  const message = yield call(asyncOperation, args); // { message: `hi ${user}` }
+  yield put({ "SUCCESSFUL_ACTION", message });
+}
+```
 
-^ as code
+---
 
-# Chapter 2: the epic. or the saga. (don quixote as a proper night, with sancho as a mayor)
+### comparison
+```javascript
+async function basicPromise(arg) {
+  const message = await asyncOperation; // { message: `hi ${user}` }
+  return message;
+}
+```
 
-Lets take a look at an alternative to Thunks.
-Sagas, also a Redux middleware, isolate side effects from actions and reducers. Sagas were introduced by
-the database community in a 1987 paper as a way to cope with long lasting transactions, and might be
-better described as process management. They have proven to be useful in a number of applications,
-including distributed systems. The saga pattern was introduced into the React/Redux community as a
-way to manage side effects. The purpose is to isolate side effects into a controlled environment.i
-They limit race conditions by pulling tasks, rather than having tasks pushed to them. Sagas rely on
-javascript generators. They return simple objects. They are have a sharper learning curve than thunk args.
+---
 
-here is an example of how it looks when added to the data flow of our breakpoints action. As you can
-see, it queues calls, and decides when to act on a given message
+### reducer
 
-# A short aside: Generators
+```javascript
+function update(state, action) {
+  switch (action.type) {
+    case "BASIC_ACTION":
+      return { message: action.message }; // { status: "done", message: "hi" }
 
-Generators are a relatively new addition to javascript. They are essentially iterator constructors.
-they build an object with a .next() method.
+    case "SUCCESSFUL_ACTION":
+      return { message: action.message }; // { status: "done", message: "hi user" }
 
-# Lets look at the same example from before: new sources
+    default:
+      return state;
+  }
+}
+```
 
-initial load -> newSource -> breakpoints -> load sourcetext -> construct symbols -> add breakpoints
-initial load -> newSource -> loadSourcetext -> construct symbols -> show text
+---
 
-^ as code
+### comparison
+```javascript
+function update(state, action) {
+  switch (action.type) {
+    case "BASIC_ACTION":
+      if (action.status === "start") {
+        return { message: action.message }; // { status: "done", message: "hi" }
+      }
+      if (action.status === "done") {
+        return { message: action.value.message }; // { status: "done", message: "hi", value: { message: "hi user" } }
+      }
+      return state;
+    default:
+      return state;
+  }
+}
+```
 
-# a couple of challenges
 
-Our code base is already written as mentioned before. Our plan was, in spring, to start the
-transition to sagas. We didn't do this. at least not yet.
+---
 
-first, we thought that our problem was much bigger than it was. we refactored our code to adhere
-more closesly to the flux pattern, and a number of the problems we had with thunks disappeared.
+## Taking this into the debugger: New Source
 
-secondly, we have a tight deadline right now. it doesnt make sense to make a refactoring of this
-scale just yet
+Loading a new source
 
-third, we have a bit of training to do, amongst ourselves and also among the community.
+* one main task
+* three secondary tasks that may or may not take effect
+
+---
+
+```
+server
+|-> new source
+   |-> dispatch "ADD_SOURCE"
+   |-> maybe add source map
+   |   |-> load sourceMap
+   |   |-> add original sources
+   |-> maybe select source
+   |   |-> load Source Text
+   |   |-> re-evaluate breakpoints
+   |   |-> dispatch addBreakpoints
+   |-> maybe add breakpoints
+       |-> load Source Text
+       |-> dispatch selectSource
+```
+
+---
+
+## thunk: new source
+
+```javascript
+function newSource(source) {
+  return async ({ dispatch, getState }) => {
+    dispatch({ type: "ADD_SOURCE", source });
+    dispatch(loadSourceMap(source)); // an async operation
+    await selectedSource(getState(), dispatch, source);
+    await checkBreakpoints(getState(), dispatch, source);
+  };
+}
+```
+
+---
+
+## saga: new source
+
+```javascript
+function* watchNewSource() {
+  yield takeEvery('NEW_SOURCE', newSource)
+}
+
+function* newSource(source) {
+  yield put({ type: "ADD_SOURCE", source });
+  yield spawn(loadSourceMap, source));
+  yield spawn(selectSource, source));
+  yield spawn(checkBreakpoints, source));
+}
+```
+
+---
+
+## thunk loadSourceMap
+```javascript
+function* loadSourceMap(source) {
+  return async ({ dispatch }) => {
+    if (hasSourceMap(source)) {
+      const data = await sourceMaps.loadSourceMap(source);
+      dispatch({ type: "LOAD_SOURCE_MAP", source, ...data });
+    }
+  };
+}
+```
+
+---
+
+## saga: loadSourceMap
+
+```javascript
+function* loadSourceMap(source) {
+  if (hasSourceMap(source)) {
+    const data = yield call(loadSourceMap, source);
+    yield put({ type: "LOAD_SOURCE_MAP", source, ...data });
+  }
+}
+```
+
+---
+
+## thunk: selectSource
+```javascript
+function selectSource(sourceId}) {
+  return ({ dispatch, getState }) => {
+    const source = getSource(getState(), id);
+
+    if (source.isSelected) {
+      dispatch(loadSourceText(source));
+      return dispatch({ type: "SELECT_SOURCE", sourceId });
+    }
+  };
+}
+```
+
+---
+
+## saga: selectSource
+
+```javascript
+function* selectSource(sourceId,) {
+  const source = yield select(getSource, sourceId);
+
+  if (source.isSelected) {
+    yield put({ type: "LOAD_SOURCE_TEXT", source });
+    yield put({ type: "SELECT_SOURCE", sourceId });
+  }
+}
+```
+
+---
+
+## thunk: checkBreakpoint
+```javascript
+async function checkBreakpoints(state, dispatch, source) {
+  const breakpoints = getBreakpointsForSource(state, source.url);
+  if (breakpoints.length) {
+    await dispatch(loadSourceText(source));
+    const breakpointsData = await Promise.all(
+      breakpoints.reduce(checkBreakpointLocation, [])
+    )
+    dispatch(syncBreakpoints(source, breakpointsData);
+  }
+}
+```
+
+---
+
+## saga: checkBreakpoint
+
+```javascript
+function* checkBreakpoints(source) {
+  const breakpoints = yield select(getBreakpointsForSource, source.url);
+  if (breakpoints.length) {
+    yield put.resolve({ type: "LOAD_SOURCE_TEXT", source });
+    const breakpointsData = yield all(
+      breakpoints.reduce(checkBreakpointLocation, [])
+    )
+
+    yield put({ type: "SYNC_BREAKPOINTS", breakpointsData, source });
+  }
+}
+```
+
+---
+
+## Load source text
+* is used in two places
+* is costly
+
+---
+
+```javascript
+function selectSource(sourceId}) {
+  return ({ dispatch, getState }) => {
+    // ...
+    if (source.isSelected) {
+      await dispatch(loadSourceText(source));
+      // ...
+    }
+  };
+}
+```
+
+```javascript
+async function checkBreakpoints(state, dispatch, source) {
+  // ...
+  if (breakpoints.length) {
+    await dispatch(loadSourceText(source));
+    // ...
+  }
+}
+```
+
+---
+
+```javascript
+function newSource(source) {
+  return async ({ dispatch, getState }) => {
+    // ...
+    await checkSelectedSource(getState(), dispatch, source);
+    await checkPendingBreakpoints(getState(), dispatch, source);
+  };
+}
+```
+
+---
+
+## Thunk Load source text
+
+```javascript
+function loadSourceText(source) {
+  return async ({ dispatch }) => {
+    if (source.text) {
+      return Promise.resolve(source);
+    }
+
+    await dispatch({
+      type: "LOAD_SOURCE_TEXT",
+      source: source,
+      [PROMISE]: loadSourceTextContents(source)
+    });
+
+    await dispatch(setSymbols(source.id));
+    await dispatch(setEmptyLines(source.id));
+  };
+}
+```
+
+---
+
+## saga load source text
+
+```javascript
+// thunk
+await dispatch(loadSourceText(source));
+
+// saga
+yield put({ type: "LOAD_SOURCE_TEXT", source });
+yield put.resolve({ type: "LOAD_SOURCE_TEXT", source });
+```
+
+---
+
+## saga channels
+```javascript
+yield takeEvery('BASIC_ACTION', basicSaga)
+
+// vs
+
+const requestChan = yield actionChannel('LOAD_SOURCE_TEXT')
+```
+
+---
+
+```javascript
+function* watchLoadSourceText() {
+  const requestChan = yield actionChannel('LOAD_SOURCE_TEXT')
+  while (true) {
+    const { payload: { source } } = yield take(requestChan)
+    if (source.text) {
+      yield source;
+    } else {
+      yield call(loadSourceText, source)
+    }
+  }
+}
+```
+
+```javascript
+function* loadSourceText(source) {
+  const data = yield call(loadSourceTextContents, source);
+  yield put.resolve({ type: "SOURCE_TEXT_AVAILABLE", source, ...data });
+  yield call(setSymbols, source.id);
+  yield call(setEmptyLines, source.id);
+}
+```
+
+---
+
+## Observations
+
+* much of the code is the same
+* sagas become truely useful when you have complex scheduling
+* thunks are useful for simple applications that do not need this amount of control
+* sagas are more declaritive than thunks; you will need to comment less
+* sagas have a learning curve, meaning any new contributor to your project will have a period of
+  time to ramp up
+
+---
+
+## Doing more with sagas
+```javascript
+function* watchLoadSourceText() {
+  const requestChan = yield actionChannel('LOAD_SOURCE_TEXT')
+  while (true) {
+    const { payload: { source } } = yield take(requestChan)
+    if (source.text) {
+      yield source;
+    } else {
+      // lets do something else here...
+    }
+  }
+}
+```
+
+---
+
+### roll forward on an error
+```javascript
+// retry and error handling
+function* loadSourceTextRepeat(source) {
+  for(let i = 0; i < 5; i++) {
+    try {
+      yield call(loadSourceText, source)
+    } catch (err) {
+      yield call(delay, 1000); // try again in a bit
+    }
+  }
+  yield put({ type: "LOAD_TEXT_ERROR", source });
+}
+```
+
+---
+
+### do something else entirely
+```javascript
+// retry and error handling
+function* streamSource(source) {
+  try {
+    yield call(loadSourceText, source)
+  } catch (err) {
+    yield put({ type: "DELETE_SOURCE", source }); //re-enter the queue at the end
+  }
+}
+```
+
+---
+
+### thunk reducer
+```javascript
+function update(state, action) {
+  switch (action.type) {
+    case "LOAD_SOURCE_TEXT":
+      if (status === "error") {
+        // ... we would have to handle rollback here
+      }
+      return state;
+
+    default:
+      return state;
+  }
+}
+```
+
+---
+
+### saga reducers
+```javascript
+function update(state, action) {
+  switch (action.type) {
+    case "LOAD_SOURCE_TEXT":
+      // ...
+
+    case "SOURCE_TEXT_AVAILABLE":
+      // ...
+
+    case "SOURCE_ERROR":
+      // ...
+
+    case "DELETE_SOURCE":
+      // ...
+
+    case "RESET_TO_LOADING":
+      // ...
+
+    default:
+      return state;
+  }
+}
+```
+
+---
+
+## Side effects: what do you need
+
+* are you waiting for sources to load before displaying something? Thunks; something that is
+  in-process, a part of the action or process that is already on going.
+
+* are you sheduling complex interactions between different services? Sagas; something that listens
+  to actions, is its own service and acts when appropriate
+
+---
+
+## Thank you!
+
+http://github.com/devtools-html
+
+@ioctaptceb
