@@ -18,26 +18,39 @@ Yulia Startsev
 
 ---
 
-## Help frustrated programmers
+<!-- .slide: data-background="./images/debugger-debuggee.png" -->
 
-1. become more frustrated
-2. solve problems
+# ⬅ Target
+<!-- .element: class="fragment" data-fragment-index="1" -->
 
----
-
-## Debugging, what is it really?
-
-![first-computer-bug](./images/first-bug.jpg)
-
----
-
-## Slide
-
-[debugger-debuggee-relationship]
+Note:
+* a debugger is a program that runs along side a program during the development
+* it helps narrow down problems within the debuggee
+* it doesn't see everything, only what a compiler tells it. this is the roll of the emitter
 
 ---
 
-## Tasks of a debugger
+<!-- .slide: data-background="./images/debugger-2.png" -->
+
+---
+
+<!-- .slide: data-background="./images/debugger-3.png" -->
+
+---
+
+<!-- .slide: data-background="./images/debugger-4.png" -->
+
+---
+
+Javascript:
+```javascript
+function foo(x) {
+  return x.a;
+}
+```
+
+Emitter:
+<!-- .element: class="fragment" data-fragment-index="1" -->
 
 ```c++
 main:
@@ -48,19 +61,10 @@ main:
 00010: call-ignores-rv
 00013: pop
 00014: retrval
-
-Source notes:
- ofs line    pc  delta desc     args
----- ---- ----- ------ -------- ------
-  0:    3     0 [   0] colspan 13
-  2:    3    14 [  14] xdelta
-  3:    3    14 [   0] colspan 7
 ```
+<!-- .element: class="fragment" data-fragment-index="1" -->
 
----
-
-## Tasks of a debugger
-
+Note:
 * is informed where the interpreter is in the execution, as the program is running
 * is capable of pausing the program
 * knows what has happened before this point (callstack)
@@ -68,31 +72,41 @@ Source notes:
 
 ---
 
-## Breakpoints
+### once...
+## There was only XUL
 
-![breakpoint](./images/breakpoint.png)
+![xul](./images/xul.png)
+<!-- .element: style="border: none;" -->
+https://en.wikipedia.org/wiki/XUL
+<!-- .element: style="font-size: 15px" -->
 
+Note:
 * are a user interface for choosing where to stop
 * are persisted between runs
-* UI is crucial
+* this is a question of UI
 
 ---
 
-## New debugger client
+### The javascript blender
 
-* written in javascript / html (web tech stack)
-* using react / redux
+<img src="./images/javascript-blender.png" alt="javascript blender" width="350" style="border: none;">
+
+Note:
+* a lot of different ideas are coming from different disciplines
+
+---
+
+<img src="./images/blender2.png" alt="javascript blender" width="600" style="border: none;">
 
 ---
 
 ### Flux
 
 ![flux-data-flow](./images/flux-data-flow.svg)
+<!-- .element: style="border: none;" -->
 
----
 
-## Flux data principles
-
+Note:
 * central store
 * store is updated via actions and reducers
 * actions should send "what happened"
@@ -100,52 +114,7 @@ Source notes:
 
 ---
 
-## Debugger Event triggers
-
-* server (debuggee events such as exceptions and debugger statements, breakpoints, load events etc)
-* user (onclick events, navigation, etc)
-
----
-
-## async services
-
-* server
-* workers (sourceMaps, abstract syntax tree, parser, etc)
-
----
-
-![dataflow](./images/data-flow.svg)
-
----
-
-## Two strategies
-
----
-
-![thunks](./images/thunk.svg)
-
----
-
-![sagas](./images/saga.svg)
-
----
-
-## Thunks in depth
-
-* compiler theory -- comes from "to have already thought"
-* Promise based
-* wraps the dispatcher
-
----
-
-## understanding promises
-
-* promises are a web api
-* promises are called after the current callstack clears
-* has three states: pending, done, and error
-
----
-
+### Action Creator
 ```javascript
 function basicAction() {
   return ({ dispatch }) => {
@@ -153,24 +122,16 @@ function basicAction() {
 }
 ```
 
-```javascript
-async function basicPromise(arg) {
-  const message = await asyncOperation; // { message: `hi ${user}` }
-  return message;
-}
-```
+---
+
+### Reducer
 
 ```javascript
 function update(state, action) {
+  // action = { type: "BASIC_ACTION", message: "hi" }
   switch (action.type) {
     case "BASIC_ACTION":
-      if (action.status === "start") {
-        return { message: action.message }; // { status: "done", message: "hi" }
-      }
-      if (action.status === "done") {
-        return { message: action.value.message }; // { status: "done", message: "hi", value: { message: "hi user" } }
-      }
-      return state;
+      return { message: action.message };
     default:
       return state;
   }
@@ -179,23 +140,152 @@ function update(state, action) {
 
 ---
 
-## Sagas in depth
+#### Async Data Flow
 
-* comes from the database community -- long life transactions
-* each step has potential to roll back or roll forward
-* generator based
-* listens to actions, and dispatches it's own actions when it is ready
+![flux-data-flow](./images/data-flow-debugger1.svg)
+<!-- .element: style="border: none; width: 700px" -->
 
 ---
 
-## understanding generators
+#### Async Data Flow
 
-* generators are the underlying logic behind async-await
-* generators create an object with a next() method
-* `yield` keyword is used to express a "pause" before the `next()` call
-* the saga middle ware takes care of calling .next() when an async call is completed
+![flux-data-flow](./images/data-flow-debugger2.svg)
+<!-- .element: style="border: none; width: 700px" -->
 
 ---
+
+## Two strategies
+
+<img src="./images/thunk.svg" alt="Thunks" height="330" style="border: none;"> <img src="./images/saga.svg" alt="Thunks" height="330" style="border: none;">
+<h4 style="width: 50%; float: left">Redux-Thunk</h4>
+<!-- .element: class="fragment" data-fragment-index="1" -->
+<h4 style="width: 50%; float: right">Redux-Saga</h4>
+<!-- .element: class="fragment" data-fragment-index="2" -->
+
+---
+
+## Interlude:
+### understanding async methods in javascript
+
+
+* promise
+<!-- .element: class="fragment" data-fragment-index="1" -->
+* async / await
+<!-- .element: class="fragment" data-fragment-index="2" -->
+* generators
+<!-- .element: class="fragment" data-fragment-index="3" -->
+
+---
+
+### simple promise
+
+```javascript
+const asyncedFn = new Promise((resolve, reject) => {
+  // ...
+  if (success) {
+    resolve(response);
+  } else {
+    reject("Error!");
+  }
+});
+```
+
+Note:
+* promises are a web api
+* has three states: pending, done, and error
+
+---
+
+### Using the promise
+
+```javascript
+asyncFn
+  .then(result => {
+    return result;
+  })
+  .catch(err => {
+    throw new Error(err);
+  });
+
+```
+
+---
+
+### Using the promise
+
+```javascript
+const initialState = doSomething1();
+
+let globalVar;
+asyncFn
+  .then(result => globalVar = result)
+
+doSomething2(global);
+```
+
+---
+
+### Promise and callstack
+
+![callstack](./images/callstack-eventloop1.svg)
+<!-- .element: style="border: none; width: 600px" -->
+
+---
+
+### Promise and callstack
+
+![callstack](./images/callstack-eventloop2.svg)
+<!-- .element: style="border: none; width: 600px" -->
+
+---
+
+### Promise and callstack
+
+![callstack](./images/callstack-eventloop3.svg)
+<!-- .element: style="border: none; width: 600px" -->
+
+---
+
+### Promise and callstack
+
+![callstack](./images/callstack-eventloop4.svg)
+<!-- .element: style="border: none; width: 600px" -->
+
+---
+
+### Promise and callstack
+
+![callstack](./images/callstack-eventloop5.svg)
+<!-- .element: style="border: none; width: 600px" -->
+
+---
+
+### Promise and callstack
+
+![callstack](./images/callstack-eventloop6.svg)
+<!-- .element: style="border: none; width: 600px" -->
+
+---
+
+### Philip Roberts: What the heck is the event loop anyway?
+[![callstack](https://img.youtube.com/vi/8aGhZQkoFbQ/0.jpg)](https://www.youtube.com/watch?v=8aGhZQkoFbQ)
+
+---
+
+### Promises as async / await
+
+```javascript
+async function something() {
+  const initialState = doSomething1();
+  const result = await asyncFn(initialState);
+  const finalState = doSomething2(result);
+  return finalState;
+}
+```
+
+---
+
+### understanding generators
 
 ```javascript
 function* beuysGenerator() {
@@ -210,37 +300,142 @@ jaNein.next() // { value: "ne ne ne", done: false }
 jaNein.next() // { value: undefined, done: true }
 ```
 
----
-
-## saga yield functions
-
-#### blocking
-
-```
-take
-take.maybe
-put.resolve
-call
-all
-join
-cancel
-actionChannel
-```
-
-#### non-blocking
-
-```
-takeEvery
-put
-fork
-spawn
-```
-
+Note:
+* are data consumers, producers, and coroutines
+* generators are the underlying logic behind async-await
+* generators create an object with a next() method
+* `yield` keyword is used to express a "pause" before the `next()` call
+* the saga middle ware takes care of calling .next() when an async call is completed
 
 ---
 
-## basic saga examples
+>>Generators are functions that can be paused and resumed (think cooperative multitasking or coroutines), which enables a variety of applications.
+>
+http://exploringjs.com/es6/ch_generators.html
 
+---
+
+
+### Bodil Stokke - The Miracle of Generators
+[![generators](https://img.youtube.com/vi/SPgPhKLE1wg/0.jpg)](https://www.youtube.com/watch?v=SPgPhKLE1wg)
+
+---
+
+### Redux-Thunk
+
+![logo](./images/redux-thunk-github.png)
+<!-- .element: style="border: none;" -->
+
+Note:
+* compiler theory -- comes from "to have already thought"
+* first formalized in 1961 in a paper by Peter Ingermann in reference to the ALGOL 60 programming
+  language
+* subroutines to compute values if the arguments can be arbitrary expressions rather than constants
+
+---
+
+#### Thunk dataflow
+
+![thunks](./images/thunk.svg)
+<!-- .element: style="border: none; width: 700px" -->
+
+Note:
+* React implementation of this is Promise based
+* wraps the dispatcher
+
+---
+
+### Action creator
+
+```javascript
+function basicAction() {
+  return ({ dispatch }) => {
+    dispatch({
+      type: "BASIC_ACTION",
+      message: "hi",
+      [PROMISE]: async funtion() {
+        return await asyncOperation(); // { message: `hi ${user}` }
+      }
+    });
+}
+```
+
+---
+
+### Reducer
+
+```javascript
+function update(state, action) {
+  switch (action.type) {
+    case "BASIC_ACTION":
+      if (action.status === "start") {
+        // { status: "start", message: "hi", ... }
+        return { message: action.message };
+      }
+      if (action.status === "done") {
+        // { status: "done", message: "hi", value: { message: "hi user" }, ... }
+        return { message: action.value.message };
+      }
+      return state;
+    default:
+      return state;
+  }
+}
+```
+
+---
+
+### Reducer: another way to look at it
+
+```javascript
+function update(state, action) {
+  switch (action.type) {
+    case "BASIC_ACTION":
+      switch (action.status) {
+        case "start":
+          // { status: "start", message: "hi", ... }
+          return { message: action.message };
+        case "done":
+          // { status: "done", message: "hi", value: { message: "hi user" }, ... }
+          return { message: action.value.message };
+        default:
+          return state;
+    default:
+      return state;
+  }
+}
+```
+
+---
+
+### Redux-Saga
+
+![logo](./images/redux-saga-github.png)
+<!-- .element: style="border: none;" -->
+
+Note:
+* comes from the database community -- Hector Garcia-Molina & Kenneth Salem
+* each step has potential to roll back or roll forward
+* generator based
+* listens to actions, and dispatches it's own actions when it is ready
+* highly useful for scheduling
+
+---
+
+>> A long life transaction is a saga if it can be written as a sequence of transactions that can be interleaved with other transactions
+>
+-- Hector Garcia-Molina & Kenneth Salem
+
+---
+
+#### Saga data-flow
+
+![saga](./images/saga.svg)
+<!-- .element: style="border: none; width: 700px" -->
+
+---
+
+### Action Creator
 ```javascript
 function basicAction() {
   return ({ dispatch }) => {
@@ -248,40 +443,47 @@ function basicAction() {
 }
 ```
 
+---
+
+### Saga
 ```javascript
 function* watchBasicAction() {
   yield takeEvery('BASIC_ACTION', basicSaga)
 }
 
-function* basicSaga(args) {
-  const message = yield call(asyncOperation, args); // { message: `hi ${user}` }
-  yield put({ "SUCCESSFUL_ACTION", message });
+function* basicSaga() {
+  const message = await asyncOperation(); // { message: `hi ${user}` }
+  yield put({ type: "SUCCESSFUL_ACTION", message });
 }
 ```
 
 ---
 
-### comparison
+### Thunk wrapped dispatch
+
 ```javascript
-async function basicPromise(arg) {
-  const message = await asyncOperation; // { message: `hi ${user}` }
-  return message;
-}
+dispatch({
+  type: "BASIC_ACTION",
+  message: "hi",
+  [PROMISE]: async funtion() {
+    return await asyncOperation(); // { message: `hi ${user}` }
+  }
+});
 ```
 
 ---
 
-### reducer
+### Reducer
 
 ```javascript
 function update(state, action) {
   switch (action.type) {
     case "BASIC_ACTION":
-      return { message: action.message }; // { status: "done", message: "hi" }
-
+      // action = { message: "hi", ... }
+      return { message: action.message };
     case "SUCCESSFUL_ACTION":
-      return { message: action.message }; // { status: "done", message: "hi user" }
-
+      // action = { message: "hi user", ... }
+      return { message: action.message };
     default:
       return state;
   }
@@ -290,38 +492,30 @@ function update(state, action) {
 
 ---
 
-### comparison
-```javascript
-function update(state, action) {
-  switch (action.type) {
-    case "BASIC_ACTION":
-      if (action.status === "start") {
-        return { message: action.message }; // { status: "done", message: "hi" }
-      }
-      if (action.status === "done") {
-        return { message: action.value.message }; // { status: "done", message: "hi", value: { message: "hi user" } }
-      }
-      return state;
-    default:
-      return state;
-  }
-}
-```
+## The problem
+
+### Spooky action at a distance
+
+# 👻
+
+Note:
+* Complex interactions between the client, server and workers
+* Eager updates to keep the ui running smooth
+* Rolling back on errors
 
 
 ---
 
-## Taking this into the debugger: New Source
+## Consider the Bug
 
-Loading a new source
+# 🐞
 
-* one main task
-* three secondary tasks that may or may not take effect
+opening a loaded source causes the source to blink
 
 ---
 
 ```
-server
+server event "new source"
 |-> new source
    |-> dispatch "ADD_SOURCE"
    |-> maybe add source map
@@ -338,133 +532,26 @@ server
 
 ---
 
-## thunk: new source
+## Load source text
+* is used in two places
+<!-- .element: class="fragment" data-fragment-index="1" -->
+* is costly
+<!-- .element: class="fragment" data-fragment-index="2" -->
+
+---
+
+## The Source of the Bug
 
 ```javascript
 function newSource(source) {
   return async ({ dispatch, getState }) => {
     dispatch({ type: "ADD_SOURCE", source });
-    dispatch(loadSourceMap(source)); // an async operation
-    await selectedSource(getState(), dispatch, source);
+    selectedSource(getState(), dispatch, source);
     await checkBreakpoints(getState(), dispatch, source);
+    dispatch(loadSourceMap(source));
   };
 }
 ```
-
----
-
-## saga: new source
-
-```javascript
-function* watchNewSource() {
-  yield takeEvery('NEW_SOURCE', newSource)
-}
-
-function* newSource(source) {
-  yield put({ type: "ADD_SOURCE", source });
-  yield spawn(loadSourceMap, source));
-  yield spawn(selectSource, source));
-  yield spawn(checkBreakpoints, source));
-}
-```
-
----
-
-## thunk loadSourceMap
-```javascript
-function* loadSourceMap(source) {
-  return async ({ dispatch }) => {
-    if (hasSourceMap(source)) {
-      const data = await sourceMaps.loadSourceMap(source);
-      dispatch({ type: "LOAD_SOURCE_MAP", source, ...data });
-    }
-  };
-}
-```
-
----
-
-## saga: loadSourceMap
-
-```javascript
-function* loadSourceMap(source) {
-  if (hasSourceMap(source)) {
-    const data = yield call(loadSourceMap, source);
-    yield put({ type: "LOAD_SOURCE_MAP", source, ...data });
-  }
-}
-```
-
----
-
-## thunk: selectSource
-```javascript
-function selectSource(sourceId}) {
-  return ({ dispatch, getState }) => {
-    const source = getSource(getState(), id);
-
-    if (source.isSelected) {
-      dispatch(loadSourceText(source));
-      return dispatch({ type: "SELECT_SOURCE", sourceId });
-    }
-  };
-}
-```
-
----
-
-## saga: selectSource
-
-```javascript
-function* selectSource(sourceId,) {
-  const source = yield select(getSource, sourceId);
-
-  if (source.isSelected) {
-    yield put({ type: "LOAD_SOURCE_TEXT", source });
-    yield put({ type: "SELECT_SOURCE", sourceId });
-  }
-}
-```
-
----
-
-## thunk: checkBreakpoint
-```javascript
-async function checkBreakpoints(state, dispatch, source) {
-  const breakpoints = getBreakpointsForSource(state, source.url);
-  if (breakpoints.length) {
-    await dispatch(loadSourceText(source));
-    const breakpointsData = await Promise.all(
-      breakpoints.reduce(checkBreakpointLocation, [])
-    )
-    dispatch(syncBreakpoints(source, breakpointsData);
-  }
-}
-```
-
----
-
-## saga: checkBreakpoint
-
-```javascript
-function* checkBreakpoints(source) {
-  const breakpoints = yield select(getBreakpointsForSource, source.url);
-  if (breakpoints.length) {
-    yield put.resolve({ type: "LOAD_SOURCE_TEXT", source });
-    const breakpointsData = yield all(
-      breakpoints.reduce(checkBreakpointLocation, [])
-    )
-
-    yield put({ type: "SYNC_BREAKPOINTS", breakpointsData, source });
-  }
-}
-```
-
----
-
-## Load source text
-* is used in two places
-* is costly
 
 ---
 
@@ -492,55 +579,86 @@ async function checkBreakpoints(state, dispatch, source) {
 
 ---
 
+### Solution 1
+#### using Thunks
+
 ```javascript
 function newSource(source) {
   return async ({ dispatch, getState }) => {
-    // ...
-    await checkSelectedSource(getState(), dispatch, source);
-    await checkPendingBreakpoints(getState(), dispatch, source);
+    dispatch({ type: "ADD_SOURCE", source });
+    await selectedSource(getState(), dispatch, source);
+    checkBreakpoints(getState(), dispatch, source);
+    dispatch(loadSourceMap(source)); // an async operation
   };
 }
 ```
 
 ---
 
-## Thunk Load source text
+### Solution 2
+#### using Sagas
 
 ```javascript
-function loadSourceText(source) {
-  return async ({ dispatch }) => {
-    if (source.text) {
-      return Promise.resolve(source);
-    }
+function* watchNewSource() {
+  yield takeEvery('NEW_SOURCE', newSource)
+}
 
-    await dispatch({
-      type: "LOAD_SOURCE_TEXT",
-      source: source,
-      [PROMISE]: loadSourceTextContents(source)
-    });
-
-    await dispatch(setSymbols(source.id));
-    await dispatch(setEmptyLines(source.id));
-  };
+function* newSource(source) {
+  yield put({ type: "ADD_SOURCE", source });
+  const proc1 = yield fork(loadSourceMap, source));
+  const proc2 = yield fork(selectSource, source));
+  const proc3 = yield fork(checkBreakpoints, source));
+  yield join([ proc1, proc2, proc3 ]);
+  yield put({ type: "SOURCE_ADDED, source });
 }
 ```
 
 ---
 
-## saga load source text
+### blocking
+<!-- .element: style="float: left; width: 50%; align: center" -->
+### non-blocking
+<!-- .element: style="float: right; width: 50%; align: center" -->
+
+```javascript
+take
+take.maybe
+put.resolve
+call
+all
+join
+cancel
+actionChannel
+```
+<!-- .element: style="float: left; width: 45%" -->
+
+
+```javascript
+takeEvery
+put
+fork
+spawn
+```
+<!-- .element: style="float: right; width: 45%" -->
+
+---
+
+### Saga: blocking put
 
 ```javascript
 // thunk
 await dispatch(loadSourceText(source));
 
 // saga
-yield put({ type: "LOAD_SOURCE_TEXT", source });
 yield put.resolve({ type: "LOAD_SOURCE_TEXT", source });
 ```
 
+Note:
+* put is not blocking
+
 ---
 
-## saga channels
+### Saga: channels
 ```javascript
 yield takeEvery('BASIC_ACTION', basicSaga)
 
@@ -565,6 +683,8 @@ function* watchLoadSourceText() {
 }
 ```
 
+---
+
 ```javascript
 function* loadSourceText(source) {
   const data = yield call(loadSourceTextContents, source);
@@ -576,18 +696,7 @@ function* loadSourceText(source) {
 
 ---
 
-## Observations
-
-* much of the code is the same
-* sagas become truely useful when you have complex scheduling
-* thunks are useful for simple applications that do not need this amount of control
-* sagas are more declaritive than thunks; you will need to comment less
-* sagas have a learning curve, meaning any new contributor to your project will have a period of
-  time to ramp up
-
----
-
-## Doing more with sagas
+### Doing more with sagas
 ```javascript
 function* watchLoadSourceText() {
   const requestChan = yield actionChannel('LOAD_SOURCE_TEXT')
@@ -680,13 +789,96 @@ function update(state, action) {
 
 ---
 
-## Side effects: what do you need
+## Observations
 
-* are you waiting for sources to load before displaying something? Thunks; something that is
-  in-process, a part of the action or process that is already on going.
+* simple promises are sufficient in most cases
+<!-- .element: class="fragment" data-fragment-index="1" -->
+* thunks are useful if you need eager updates and error handling on the reducer
+<!-- .element: class="fragment" data-fragment-index="2" -->
+* sagas are useful when working with complex scheduling tasks
+<!-- .element: class="fragment" data-fragment-index="3" -->
 
-* are you sheduling complex interactions between different services? Sagas; something that listens
-  to actions, is its own service and acts when appropriate
+Note:
+* much of the code is the same
+* sagas become truely useful when you have complex scheduling
+* thunks are useful for simple applications that do not need this amount of control
+* sagas are more declaritive than thunks; you will need to comment less
+* sagas have a learning curve, meaning any new contributor to your project will have a period of
+  time to ramp up
+
+---
+
+## Criticisms of both Thunks and Sagas
+
+* they are too powerfull and do too much
+<!-- .element: class="fragment" data-fragment-index="1" -->
+* the same can be achieved with simple promises
+<!-- .element: class="fragment" data-fragment-index="2" -->
+* thunks lead to duplicate async logic
+<!-- .element: class="fragment" data-fragment-index="3" -->
+* sagas and generators are difficult to understand
+<!-- .element: class="fragment" data-fragment-index="3" -->
+
+---
+
+## Positive aspects of Thunks
+
+* easy to start using
+<!-- .element: class="fragment" data-fragment-index="1" -->
+* work for a large number of cases
+<!-- .element: class="fragment" data-fragment-index="2" -->
+* good for eager updates when an action reflects an api call
+<!-- .element: class="fragment" data-fragment-index="3" -->
+
+---
+
+## Positive aspects of Sagas
+
+* excellent for testing
+<!-- .element: class="fragment" data-fragment-index="1" -->
+* handle complex scheduling very well
+<!-- .element: class="fragment" data-fragment-index="2" -->
+* allows fine grained control over what happens in the system
+<!-- .element: class="fragment" data-fragment-index="3" -->
+
+---
+
+## What did we do in the end?
+
+We are sticking with thunks... for the time being
+<!-- .element: class="fragment" data-fragment-index="1" -->
+
+Reasons:
+<!-- .element: class="fragment" data-fragment-index="2" -->
+* while difficult to maintain, the community is familiar with them
+<!-- .element: class="fragment" data-fragment-index="3" -->
+* it is not yet the right time to do a large scale refactoring
+<!-- .element: class="fragment" data-fragment-index="4" -->
+
+---
+
+### Getting the community ready for a change
+
+* discussed with core community members
+<!-- .element: class="fragment" data-fragment-index="2" -->
+* received feedback from the maintainers of redux-saga
+<!-- .element: class="fragment" data-fragment-index="3" -->
+* experimented on a small scale
+<!-- .element: class="fragment" data-fragment-index="4" -->
+
+---
+
+### Going forward as a community
+
+![going forward with the community](./images/community.png)
+<!-- .element: style="border: none; width: 700px" -->
+
+---
+
+### Going forward as a community
+
+![going forward with the community](./images/community2.png)
+<!-- .element: style="border: none; width: 700px" -->
 
 ---
 
