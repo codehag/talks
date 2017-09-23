@@ -1,0 +1,16 @@
+{
+  "name": "slides",
+  "scripts": {
+    "reveal": "reveal-md"
+  },
+  "author": {
+    "name": "Yulia Startsev"
+  },
+  "engines": {
+    "node": ">=4.0.0"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "reveal-md": "^0.4.1"
+  }
+}
