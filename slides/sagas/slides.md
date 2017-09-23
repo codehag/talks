@@ -8,9 +8,15 @@ revealOptions:
 # Side-Effects
 ### Results may vary
 
-Yulia Startsev
+Yulia Startsev (@ioctapteb)
 
-@ioctapteb
+Partial::Conf 2017
+
+![moz](./images/moz.svg)
+<!-- .element: style="border: none; width: 200px" -->
+
+Note:
+* Anna Doubkova
 
 ---
 
@@ -69,6 +75,13 @@ Note:
 * is capable of pausing the program
 * knows what has happened before this point (callstack)
 * allows the user to select pause points
+
+---
+
+## The UI
+
+![ui](./images/breakpoint.png)
+<!-- .element: style="border: none;" -->
 
 ---
 
@@ -269,6 +282,42 @@ doSomething2(global);
 
 ### Philip Roberts: What the heck is the event loop anyway?
 [![callstack](https://img.youtube.com/vi/8aGhZQkoFbQ/0.jpg)](https://www.youtube.com/watch?v=8aGhZQkoFbQ)
+
+---
+
+### Using the promise
+
+```javascript
+const initialState = doSomething1();
+
+let globalVar;
+asyncFn
+  .then(result =>
+    doSomething2(result)
+  )
+
+```
+
+---
+
+### Using the promise
+
+```javascript
+const initialState = doSomething1();
+
+let globalVar;
+asyncFn
+  .then(result =>
+    doSomething2(result)
+    asyncFn2
+      .then(result =>
+        // ...
+      )
+    // ...
+  )
+
+```
+
 
 ---
 
@@ -879,6 +928,15 @@ Reasons:
 
 ![going forward with the community](./images/community2.png)
 <!-- .element: style="border: none; width: 700px" -->
+
+---
+
+### So...
+### perhaps you are interested
+<!-- .element: class="fragment" data-fragment-index="1" -->
+
+http://github.com/devtools-html
+<!-- .element: class="fragment" data-fragment-index="2" -->
 
 ---
 
